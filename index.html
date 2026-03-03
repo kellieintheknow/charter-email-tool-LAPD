@@ -336,10 +336,11 @@ Thank you for your consideration,
         status.textContent = "";
       }
 
-      function buildMailto(to, subject, body) {
-        const params = new URLSearchParams({ subject: subject || "", body: body || "" });
-        return `mailto:${encodeURIComponent(to || "")}?${params.toString()}`;
-      }
+     function buildMailto(to, subject, body) {
+  return `mailto:${encodeURIComponent(to || "")}` +
+    `?subject=${encodeURIComponent(subject || "")}` +
+    `&body=${encodeURIComponent(body || "")}`;
+}
 
       el("openMailBtn").addEventListener("click", () => {
         const to = el("toEmail").value.trim();
