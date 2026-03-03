@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email the Charter Commission</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; line-height: 1.45; }
+      .wrap { max-width: 860px; margin: 0 auto; }
+      h1 { margin: 0 0 8px; }
+      p { margin: 10px 0; }
+      .card { border: 1px solid #ddd; border-radius: 14px; padding: 16px; margin: 14px 0; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      input[type="text"], input[type="email"], textarea, select {
+        width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; font: inherit;
+      }
+      textarea { min-height: 240px; }
+      .btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+      button {
+        appearance: none; border: 0; border-radius: 12px; padding: 12px 14px; cursor: pointer;
+        background: #111; color: #fff; font-weight: 700;
+      }
+      button.secondary { background: #f2f2f2; color: #111; border: 1px solid #ddd; font-weight: 600; }
+      .hint { color: #555; font-size: 14px; }
+      a { color: inherit; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <h1>Email the Charter Commission</h1>
+
+      <div class="card">
+        <p>
+          The City of Los Angeles is currently rewriting the City Charter — first adopted in 1924 and effective July 1, 1925 —
+          with the current charter affirmed effective July 2000.
+          We have the opportunity to create the city <b>we</b> want, but we need to make our voices heard.
+        </p>
+
+        <p>
+          The Charter Reform Commission is meeting on <b>March 5, 2026</b> to discuss <b>police reform/accountability</b>.
+          Email <span class="mono">reformLAcharter@lacity.org</span> and tell them what you want to see.
+        </p>
+
+        <p class="hint">
+          Select the reforms you support below and the email template will generate for you to send.
+          See the full list in more detail here:
+          <a id="fullListLink" href="https://reformlacharter.lacity.gov/resources-materials" target="_blank" rel="noreferrer">Charter Reform resources</a>
+          <!-- Replace that URL with your preferred “full list” link -->
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <div>
+            <label class="hint"><b>To</b></label>
+            <input id="toEmail" type="email" />
+            <div class="hint">Default is the Commission’s public comment email.</div>
+          </div>
+          <div>
+            <label class="hint"><b>Subject</b></label>
+            <input id="subject" type="text" value="Support for LAPD Accountability Reforms in the Charter" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin:0 0 10px;">Select reforms you support</h2>
+        <div class="hint" style="margin-bottom:8px;">
+          Tip: Hold <span class="mono">⌘</span> (Mac) or <span class="mono">Ctrl</span> (PC) to select multiple.
+        </div>
+        <select id="causeSelect" multiple size="10"></select>
+      </div>
+
+      <div class="card">
+        <h2 style="margin:0 0 10px;">Email preview</h2>
+        <textarea id="preview" readonly></textarea>
+
+        <div class="btns">
+          <button id="openMailBtn">Email the Charter Commission</button>
+          <button class="secondary" id="copyBtn" type="button">Copy Email Text</button>
+          <button class="secondary" id="resetBtn" type="button">Reset</button>
+        </div>
+
+        <div id="status" class="hint" style="margin-top:6px;"></div>
+        <div class="hint" style="margin-top:8px;">
+          Note: very long emails can hit <span class="mono">mailto:</span> size limits in some browsers/clients.
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // EDIT THIS LIST to match your dropdown items (these become bullets).
+      const REFORMS = [
+        { id: "liability", label: "Move LAPD liability settlement payouts out of the General Fund and into the LAPD budget" },
+        { id: "discipline", label: "Strengthen disciplinary processes and ensure meaningful consequences for misconduct" },
+        { id: "civilian", label: "Strengthen civilian oversight authority and independence over LAPD" },
+        { id: "transparency", label: "Increase transparency and public reporting on discipline, settlements, and outcomes" },
+        { id: "audits", label: "Require regular audits and public accountability measures related to LAPD spending and practices" }
+      ];
+
+      // Email template (uses {{CAUSE_LIST}} as insertion point)
+      const TEMPLATE = `To the Los Angeles City Charter Reform Commission,
+
+As a resident of Los Angeles, I am writing in support of the following Charter reforms related to the LAPD to ensure financial accountability, meaningful disciplinary reform, and strengthened civilian oversight:
+
+{{CAUSE_LIST}}
+
+These reforms are essential to restoring public trust and ensuring that accountability mechanisms are embedded directly in the City Charter.
+
+Thank you for your consideration,
+
+[Your Name]
+[Neighborhood or ZIP Code]`;
+
+      const el = (id) => document.getElementById(id);
+      const toEmail = el("toEmail");
+      const subject = el("subject");
+      const causeSelect = el("causeSelect");
+      const preview = el("preview");
+      const status = el("status");
+
+      function renderOptions() {
+        causeSelect.innerHTML = "";
+        for (const r of REFORMS) {
+          const opt = document.createElement("option");
+          opt.value = r.id;
+          opt.textContent = r.label;
+          causeSelect.appendChild(opt);
+        }
+      }
+
+      function selectedReforms() {
+        return [...causeSelect.selectedOptions].map((o) => o.value);
+      }
+
+      function buildCauseListText(ids) {
+        if (!ids.length) return "• (No reforms selected)";
+        const items = REFORMS.filter((r) => ids.includes(r.id));
+        return items.map((r) => `• ${r.label}`).join("\n");
+      }
+
+      function updatePreview() {
+        const causeText = buildCauseListText(selectedReforms());
+        preview.value = TEMPLATE.replace("{{CAUSE_LIST}}", causeText);
+        status.textContent = "";
+      }
+
+      function buildMailto(to, subj, body) {
+        const params = new URLSearchParams({
+          subject: subj || "",
+          body: body || ""
+        });
+        return `mailto:${encodeURIComponent(to || "")}?${params.toString()}`;
+      }
+
+      // Defaults based on official Commission site
+      toEmail.value = "reformLAcharter@lacity.org";
+
+      causeSelect.addEventListener("change", updatePreview);
+
+      el("openMailBtn").addEventListener("click", () => {
+        const mailto = buildMailto(toEmail.value.trim(), subject.value.trim(), preview.value);
+        window.location.href = mailto;
+      });
+
+      el("copyBtn").addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(preview.value);
+          status.textContent = "Copied to clipboard.";
+        } catch {
+          preview.focus();
+          preview.select();
+          status.textContent = "Clipboard blocked—selected the text instead. Press ⌘C / Ctrl+C.";
+        }
+      });
+
+      el("resetBtn").addEventListener("click", () => {
+        toEmail.value = "reformLAcharter@lacity.org";
+        subject.value = "Support for LAPD Accountability Reforms in the Charter";
+        [...causeSelect.options].forEach((o) => (o.selected = false));
+        updatePreview();
+        status.textContent = "";
+      });
+
+      renderOptions();
+      updatePreview();
+    </script>
+  </body>
+</html>
